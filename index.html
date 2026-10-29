@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <style>
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { background:#000; margin:0; padding:0; min-height:100%; text-size-adjust:100%; touch-action:manipulation; overscroll-behavior:none; }
+html, body { background:#000; margin:0; padding:0; min-height:100%; text-size-adjust:100%; touch-action:manipulation; overscroll-behavior:none; -webkit-font-smoothing:antialiased; }
 button, input, textarea { font-family: inherit; touch-action: manipulation; }
 .wrap { display:flex; justify-content:center; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; }
 .phone { position:relative; width:100%; max-width:390px; height:672px; overflow:hidden; background:#000; border:1px solid rgba(0,255,102,.2); border-radius:22px; box-shadow:inset 0 0 0 1px rgba(0,255,102,.067); display:flex; flex-direction:column; color:#b6ffcd; }
@@ -16,30 +16,30 @@ html.solo .phone { max-width:none; height:100dvh; border:0; border-radius:0; box
 .scan { position:absolute; inset:0; pointer-events:none; z-index:3; background:repeating-linear-gradient(rgba(0,0,0,0) 0,rgba(0,0,0,0) 2px,rgba(0,0,0,.4) 2px,rgba(0,0,0,.4) 3px); opacity:.5; }
 .vign { position:absolute; inset:0; pointer-events:none; z-index:2; background:radial-gradient(at 50% 40%,rgba(0,0,0,0) 30%,rgba(0,0,0,.8) 100%); }
 .z { position:relative; z-index:4; display:flex; flex-direction:column; height:100%; min-height:0; }
-.topwrap { position:relative; z-index:30; background:#000; flex:0 0 auto; border-bottom:1px solid rgba(0,255,102,.333); box-shadow:0 4px 14px rgba(0,0,0,.8); user-select:none; }
-.sbar { display:flex; justify-content:space-between; align-items:center; padding:8px 14px 4px; font-size:10px; color:rgba(0,255,102,.8); letter-spacing:.08em; }
-html.solo .sbar { padding-top:calc(8px + env(safe-area-inset-top)); }
+.topwrap { position:relative; z-index:30; background:#000; flex:0 0 auto; border-bottom:1px solid rgba(0,255,102,.5); box-shadow:0 4px 14px rgba(0,0,0,.85); user-select:none; }
+.sbar { display:flex; justify-content:space-between; align-items:center; padding:8px 14px 6px; font-size:10px; font-weight:700; color:rgba(0,255,102,.92); letter-spacing:.08em; }
+html.solo .sbar { padding-top:calc(14px + env(safe-area-inset-top)); }
 .sbar .r { display:flex; gap:6px; align-items:center; }
-header { padding:2px 12px 10px; }
-.brand { display:flex; align-items:center; gap:8px; }
-.seal { flex:0 0 auto; color:#00ff66; filter:drop-shadow(0 0 7px rgba(0,255,102,.6)); }
-.seal.sm { width:32px; height:32px; }
-.wordmark { font-size:10px; letter-spacing:.24em; color:#00ff66; font-weight:700; text-shadow:0 0 8px rgba(0,255,102,.533); white-space:nowrap; flex:0 0 auto; }
-.gear { position:relative; margin-left:auto; flex:0 0 auto; height:26px; padding:0 8px; border-radius:7px; background:rgba(0,255,102,.082); border:1px solid rgba(0,255,102,.467); color:#00ff66; cursor:pointer; display:flex; align-items:center; gap:4px; font-family:inherit; font-size:9px; letter-spacing:.1em; }
+header { padding:4px 12px 11px; }
+.brand { display:flex; align-items:center; gap:9px; }
+.seal { flex:0 0 auto; color:#00ff66; filter:drop-shadow(0 0 4px rgba(0,255,102,.5)); }
+.seal.sm { width:34px; height:34px; }
+.wordmark { font-size:12.5px; letter-spacing:.18em; color:#a8ffc9; font-weight:700; text-shadow:0 0 5px rgba(0,255,102,.35); white-space:nowrap; flex:0 0 auto; }
+.gear { position:relative; margin-left:auto; flex:0 0 auto; height:28px; padding:0 10px; border-radius:8px; background:rgba(0,255,102,.16); border:1px solid rgba(0,255,102,.85); color:#d8ffe7; cursor:pointer; display:flex; align-items:center; gap:5px; font-family:inherit; font-size:10px; font-weight:700; letter-spacing:.1em; }
 .gear .warn { position:absolute; top:-4px; right:-4px; width:9px; height:9px; border-radius:50%; background:#ff004c; box-shadow:0 0 8px #ff004c; display:none; }
 .gear.nokey .warn { display:block; }
 .dot { width:7px; height:7px; border-radius:50%; background:#00ff66; flex:0 0 auto; box-shadow:0 0 8px #00ff66; animation:pulse 1.6s infinite; }
 @keyframes pulse { 50% { opacity:.25; } }
-.idrow { display:flex; align-items:center; gap:8px; margin-top:8px; }
-.uname { font-size:13px; font-weight:700; letter-spacing:.1em; color:#d8ffe7; flex:0 0 auto; border-left:2px solid #00ff66; padding-left:7px; }
-.motto { font-size:8px; line-height:1.35; letter-spacing:.06em; color:rgba(0,255,102,.667); border-left:1px solid rgba(0,255,102,.2); padding-left:7px; text-transform:uppercase; }
+.idrow { display:flex; align-items:center; gap:9px; margin-top:9px; }
+.uname { font-size:14px; font-weight:700; letter-spacing:.1em; color:#eafff2; flex:0 0 auto; border-left:2px solid #00ff66; padding-left:8px; }
+.motto { font-size:9px; line-height:1.4; letter-spacing:.04em; color:rgba(0,255,102,.82); border-left:1px solid rgba(0,255,102,.3); padding-left:8px; text-transform:uppercase; }
 .motto i { color:#00ff66; font-style:normal; }
 .screen { flex:1 1 0; overflow:hidden; display:flex; flex-direction:column; min-height:0; }
 #boot { padding:14px; font-size:11px; line-height:1.55; color:rgba(0,255,102,.667); overflow:hidden; }
 #boot .ok { color:#00ff66; }
 #lock { flex:1 1 0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:10px 22px; overflow:hidden; user-select:none; }
 #lock.hide, #boot.hide { display:none; }
-.seal.big { width:100px; height:100px; filter:drop-shadow(0 0 18px rgba(0,255,102,.467)); flex:0 0 auto; }
+.seal.big { width:100px; height:100px; filter:drop-shadow(0 0 12px rgba(0,255,102,.467)); flex:0 0 auto; }
 .spin { animation:rot 24s linear infinite; transform-origin:60px 60px; }
 @keyframes rot { 100% { transform:rotate(360deg); } }
 .lt { font-size:11px; letter-spacing:.28em; color:#00ff66; text-align:center; }
@@ -91,8 +91,8 @@ html.solo .bar { padding-bottom:calc(10px + env(safe-area-inset-bottom)); }
 .bar button.send { background:#00ff66; border:1px solid #00ff66; color:#001a0a; height:40px; padding:0 14px; border-radius:10px; cursor:pointer; flex:0 0 auto; font-family:inherit; font-size:11px; font-weight:700; letter-spacing:.12em; display:flex; align-items:center; gap:5px; }
 .bar button.send.stop { background:#ff004c; border-color:#ff004c; color:#fff; }
 .bar button.send svg { width:13px; height:13px; flex:0 0 auto; }
-.trace { display:flex; gap:12px; padding:4px 12px 6px; font-size:8px; letter-spacing:.1em; color:rgba(0,255,102,.333); flex:0 0 auto; user-select:none; }
-.trace b { color:rgba(0,255,102,.667); font-weight:400; }
+.trace { display:flex; gap:12px; padding:4px 12px 6px; font-size:8px; letter-spacing:.1em; color:rgba(0,255,102,.45); flex:0 0 auto; user-select:none; }
+.trace b { color:rgba(0,255,102,.8); font-weight:400; }
 #set { position:absolute; inset:0; z-index:20; background:#000; display:none; flex-direction:column; padding:0 14px 18px; gap:10px; overflow-y:auto; overscroll-behavior:contain; padding-top:calc(var(--toph,112px) + 12px + env(safe-area-inset-top)); }
 #set.on { display:flex; }
 .seth { display:flex; align-items:center; gap:8px; border-bottom:1px solid rgba(0,255,102,.2); padding-bottom:9px; }
@@ -149,11 +149,11 @@ textarea.fld { min-height:80px; resize:vertical; line-height:1.5; font-size:13px
       <header>
         <div class="brand">
           <svg class="seal sm" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="60" cy="60" r="56" stroke-width="1.6" opacity=".55"></circle>
-            <circle cx="60" cy="60" r="50" stroke-width=".7" opacity=".3" stroke-dasharray="2 4"></circle>
+            <circle cx="60" cy="60" r="56" stroke-width="2.2" opacity=".9"></circle>
+            <circle cx="60" cy="60" r="50" stroke-width=".9" opacity=".45" stroke-dasharray="2 4"></circle>
             <text font-size="9.5" font-family="ui-monospace,monospace" letter-spacing="3.4" fill="currentColor" stroke="none" font-weight="700"><textPath href="#arcTop" startOffset="50%" text-anchor="middle">ANONYMOUS</textPath></text>
             <text font-size="5.6" font-family="ui-monospace,monospace" letter-spacing="1.5" fill="currentColor" stroke="none" opacity=".8"><textPath href="#arcBot" startOffset="50%" text-anchor="middle">WE ARE LEGION</textPath></text>
-            <use href="#fawkes" transform="translate(39,34) scale(.42)" stroke-width="6"></use>
+            <use href="#fawkes" transform="translate(39,34) scale(.42)" stroke-width="7"></use>
           </svg>
           <span class="wordmark">ANONYMOUS</span>
           <button class="gear nokey" id="gear" aria-label="impostazioni">⚙ API<span class="warn"></span></button>
@@ -189,7 +189,7 @@ textarea.fld { min-height:80px; resize:vertical; line-height:1.5; font-size:13px
         <div id="log"></div>
         <div id="keybar" class="on"><b>!</b> chiave API non collegata<span class="ar">›</span></div>
         <div class="att" id="att"><img id="attImg" alt=""><span id="attName">allegato</span><b id="attX">✕</b></div>
-        <div class="trace"><span>nodi <b id="t1">0</b></span><span>ping <b id="t2">0ms</b></span><span>aes <b>256</b></span><span>build <b>1.7</b></span><span>id <b id="t3">L9XU</b></span></div>
+        <div class="trace"><span>nodi <b id="t1">0</b></span><span>ping <b id="t2">0ms</b></span><span>aes <b>256</b></span><span>build <b>1.8</b></span><span>id <b id="t3">L9XU</b></span></div>
         <div class="bar">
           <span class="p">&gt;</span>
           <button class="clip" id="clip" aria-label="allega immagine">＋</button>
