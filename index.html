@@ -263,9 +263,11 @@ let bi=0;const bT=setInterval(()=>{if(bi>=bootLines.length){clearInterval(bT);re
   const d=document.createElement("div");d.className="ok";d.textContent=bootLines[bi++];boot.appendChild(d);},70);
 
 const CK="anon_cfg_v4",MK="anon_convo_v2",GK="anon_mem_v1",PREFIX="VENICE_INFERENCE_KEY_";
-const DEF_SYS="Sei la shell di Alex1611 dentro un terminale in stile Anonymous e Matrix. Rispondi in italiano, tono asciutto, diretto, da hacker. Vai al punto, nessuna prefazione. Messaggi brevi, massimo 4-5 righe, a meno che serva di più. Ogni tanto una formula del manifesto, senza esagerare. Non dire mai che non puoi generare immagini: qui il terminale le genera.";
+const OLD_SYS="Sei la shell di Alex1611 dentro un terminale in stile Anonymous e Matrix. Rispondi in italiano, tono asciutto, diretto, da hacker. Vai al punto, nessuna prefazione. Messaggi brevi, massimo 4-5 righe, a meno che serva di più. Ogni tanto una formula del manifesto, senza esagerare.";
+const DEF_SYS="Sei Venice, la shell di Alex1611. Parli italiano naturale, come una persona sveglia e diretta, non come un manuale né come un cartello. Frasi normali, lunghezza umana, tono confidenziale ma concreto: niente gergo hacker messo a forza e niente slogan a ogni risposta, il manifesto lo citi ogni tanto quando ci sta. Se qualcosa non lo sai, lo dici invece di riempire. Le immagini le genera il terminale: non dire di averle create se sotto non ne compare nessuna.";
 let cfg={key:"",model:"venice-uncensored-1-2",sys:DEF_SYS,web:"off"};
 try{const s=JSON.parse(localStorage.getItem(CK));if(s)cfg=Object.assign(cfg,s);}catch(e){}
+if(!cfg.sys||cfg.sys===OLD_SYS||/tono asciutto/i.test(cfg.sys))cfg.sys=DEF_SYS;
 let mem=[];try{mem=JSON.parse(localStorage.getItem(GK))||[];}catch(e){}
 $("#key").value=cfg.key;$("#model").value=cfg.model;$("#sys").value=cfg.sys;
 
@@ -379,15 +381,31 @@ function hist(){
   });
 }
 
+/* ---------- riconoscimento richiesta immagine ---------- */
+const IMG_NOUN=/\b(immagin\w*|foto\w*|fotograf\w*|disegn\w*|ritratt\w*|illustra\w*|artwork|wallpaper|sfondo)\b/i;
+const IMG_VERB=/\b(crea\w*|genera\w*|disegna\w*|dipingi|abbozza|produci|renderizza)\b/i;
+const NOT_IMG=/\b(lista|elenco|tabella|codice|riassunto|riassumi|spiega|spiegami|traduci|calcola|perché|come mai)\b/i;
+const IMG_FOLLOW=/\b(rifai|rifalla|rifallo|un'altra|un altro|di nuovo|ancora|stessa|stesso|variante|più grande|piu grande|zoom)\b/i;
+let lastPrompt=null;
+
+function wantsImage(t){
+  if(/^\/img\b/i.test(t))return true;
+  if(IMG_NOUN.test(t))return true;
+  if(IMG_VERB.test(t)&&t.length<100&&!NOT_IMG.test(t))return true;
+  return false;
+}
+
 /* ---------- immagini ---------- */
 const IMG_MODELS=["lustify-v8","lustify-v7","lustify-sdxl","venice-sd35"];
 const NEG="blurry, low quality, watermark, text, deformed hands, extra fingers";
 let capsCache=null;
 async function caps(){
   if(capsCache)return capsCache;
-  const r=await fetch(API+"/models?type=image",{headers:{Authorization:"Bearer "+cfg.key}});
-  const j=await r.json();
-  capsCache=new Map((j.data||[]).map(m=>[m.id,(m.model_spec&&m.model_spec.constraints)||{}]));
+  try{
+    const r=await fetch(API+"/models?type=image",{headers:{Authorization:"Bearer "+cfg.key}});
+    const j=await r.json();
+    capsCache=new Map((j.data||[]).map(m=>[m.id,(m.model_spec&&m.model_spec.constraints)||{}]));
+  }catch(e){capsCache=new Map();}
   return capsCache;
 }
 function imgBody(model,prompt,o,c){
@@ -407,14 +425,29 @@ async function imgCall(model,b){
   }
   return {ok:false,status:429,json:{}};
 }
+async function expandPrompt(t){
+  try{
+    const r=await fetch(API+"/chat/completions",{method:"POST",
+      headers:{"Content-Type":"application/json",Authorization:"Bearer "+cfg.key},
+      body:JSON.stringify({model:cfg.model,max_completion_tokens:140,temperature:0.7,
+        messages:[
+          {role:"system",content:"Trasforma la richiesta in un prompt per un generatore di immagini. Inglese, concreto: soggetto, inquadratura, luce, resa. Rispondi solo con il prompt, senza virgolette né prefissi."},
+          {role:"user",content:t}]})});
+    if(!r.ok)return t;
+    const j=await r.json();
+    const p=((j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content)||"").trim().replace(/^["'`]+|["'`]+$/g,"");
+    return p||t;
+  }catch(e){return t;}
+}
 async function doImage(prompt,o){
-  const c=await caps();let last="sconosciuto";
-  for(const model of IMG_MODELS){
-    if(!c.has(model))continue;
+  const c=await caps();
+  const list=c.size?IMG_MODELS.filter(m=>c.has(m)):IMG_MODELS;
+  let last="sconosciuto";
+  for(const model of list){
     let r=await imgCall(model,imgBody(model,prompt,o,c.get(model)));
     if(!r.ok&&r.status===422){
       const alt=r.json.recommended_model,fixed=r.json.suggested_prompt||prompt;
-      const m2=alt&&c.has(alt)?alt:model;
+      const m2=alt&&(!c.size||c.has(alt))?alt:model;
       r=await imgCall(m2,imgBody(m2,fixed,o,c.get(m2)));
     }
     if(r.ok&&r.json.images&&r.json.images.length){
@@ -492,7 +525,7 @@ clip.addEventListener("click",()=>{
 attX.addEventListener("click",()=>{pending=null;att.classList.remove("on");attImg.removeAttribute("src");});
 
 /* ---------- invio ---------- */
-function handle(raw){
+async function handle(raw){
   const t=raw.trim();if((!t&&!pending)||busy)return;
   const low=t.toLowerCase();
 
@@ -509,14 +542,19 @@ function handle(raw){
 
   if(!cfg.key){bot("canale muto: apri ⚙ e incolla la chiave API.");return;}
 
-  busy=true;send.classList.add("stop");sendLbl.textContent="STOP";
-
-  if(/^\/img\b/i.test(low)||/\b(genera|fai|disegna|crea)\b.*\b(immagine|foto|disegno|artwork)\b/i.test(low)){
-    const prompt=t.replace(/^\/img\s*/i,"").replace(/ratio=\S+|n=\d/g,"").trim();
-    if(!prompt){busy=false;send.classList.remove("stop");sendLbl.textContent="INVIA";bot("manca il prompt.");return;}
+  const follow=IMG_FOLLOW.test(low)&&lastPrompt;
+  if(wantsImage(t)){
+    let prompt=t.replace(/^\/img\s*/i,"").replace(/ratio=\S+|n=\d/g,"").trim();
+    if(!prompt&&!follow){bot("manca il prompt, dimmi cosa disegnare.");return;}
     const ratio=(/ratio=(\d+:\d+)/.exec(t)||[])[1];
     const n=Number((/n=([1-4])/.exec(t)||[])[1]||1);
-    doImage(prompt,{ratio,n}).finally(()=>{busy=false;send.classList.remove("stop");sendLbl.textContent="INVIA";});
+    busy=true;send.classList.add("stop");sendLbl.textContent="STOP";
+    sys("genero…");
+    try{
+      const finalPrompt=follow?lastPrompt:await expandPrompt(prompt);
+      lastPrompt=finalPrompt;
+      await doImage(finalPrompt,{ratio,n});
+    }finally{busy=false;send.classList.remove("stop");sendLbl.textContent="INVIA";}
     return;
   }
 
@@ -549,7 +587,7 @@ function unlock(){
   if(saved.length)sys("sessione ripristinata dal dispositivo");
   else{
     sys("canale aperto · "+new Date().toLocaleDateString("it-IT"));
-    setTimeout(()=>bot(cfg.key?"canale cifrato, Alex1611. immagini, web e memoria sono attivi."
+    setTimeout(()=>bot(cfg.key?"canale aperto, Alex. dimmi pure: testo, immagini, ricerche."
       :"sei dentro, ma il canale è muto: tocca la barra rossa e incolla la chiave API."),200);
   }
 }
