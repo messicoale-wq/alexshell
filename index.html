@@ -111,7 +111,7 @@ textarea.fld { min-height:80px; resize:vertical; line-height:1.5; font-size:13px
 .keyrow { display:flex; gap:6px; }
 .keyrow .fld { flex:1 1 0; font-size:12px; }
 .keyrow button { flex:0 0 auto; width:40px; background:rgba(0,255,102,.082); border:1px solid rgba(0,255,102,.267); color:#00ff66; border-radius:8px; cursor:pointer; font-size:13px; font-family:inherit; }
-.diag { font-size:9px; line-height:1.5; color:#ff9ab4; }
+.diag { font-size:9px; line-height:1.5; color:#ff9ab4; white-space:pre-wrap; }
 .diag.ok { color:#00ff66; }
 .memlist { font-size:10px; line-height:1.7; color:rgba(0,255,102,.7); border:1px solid rgba(0,255,102,.15); border-radius:8px; padding:8px; max-height:110px; overflow-y:auto; }
 .memlist i { color:#ff004c; font-style:normal; cursor:pointer; margin-left:6px; }
@@ -185,7 +185,7 @@ textarea.fld { min-height:80px; resize:vertical; line-height:1.5; font-size:13px
         <div id="log"></div>
         <div id="keybar" class="on"><b>!</b> chiave API non collegata<span class="ar">›</span></div>
         <div class="att" id="att"><img id="attImg" alt=""><span id="attName">allegato</span><b id="attX">✕</b></div>
-        <div class="trace"><span>nodi <b id="t1">0</b></span><span>ping <b id="t2">0ms</b></span><span>aes <b>256</b></span><span>id <b id="t3">L9XU</b></span></div>
+        <div class="trace"><span>nodi <b id="t1">0</b></span><span>ping <b id="t2">0ms</b></span><span>aes <b>256</b></span><span>build <b>1.5</b></span><span>id <b id="t3">L9XU</b></span></div>
         <div class="bar">
           <span class="p">&gt;</span>
           <button class="clip" id="clip" aria-label="allega immagine">＋</button>
@@ -220,6 +220,7 @@ textarea.fld { min-height:80px; resize:vertical; line-height:1.5; font-size:13px
     <div class="lbl">5 · web search</div>
     <div class="row"><button class="sbtn" id="webTgl">auto: off</button></div>
     <div class="row"><button class="sbtn pri" id="saveCfg">salva</button><button class="sbtn" id="test">prova chiave</button></div>
+    <div class="row"><button class="sbtn" id="testImg">prova immagine</button></div>
     <div class="row"><button class="sbtn dng" id="wipe">cancella chiave</button></div>
     <div class="note">Chiave da <a href="https://venice.ai/settings/api" target="_blank" rel="noopener">venice.ai/settings/api</a>. Resta solo su questo dispositivo. Immagini: modello lustify con <code>safe_mode:false</code>, nessun blur.</div>
   </div>
@@ -321,6 +322,24 @@ $("#test").addEventListener("click",async()=>{
     if(!r.ok){const t=await r.text().catch(()=>"");$("#diag").className="diag";$("#diag").textContent="HTTP "+r.status+" · "+t.slice(0,140);}
   }catch(e){$("#stato").textContent="stato: rete o CORS";$("#diag").className="diag";$("#diag").textContent=String(e);}
 });
+$("#testImg").addEventListener("click",async()=>{
+  const k=clean($("#key").value);const d=$("#diag");
+  d.className="diag";d.textContent="test immagine in corso…";
+  try{
+    const r=await fetch(API+"/image/generate",{method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+k},
+      body:JSON.stringify({model:"lustify-v8",prompt:"a red apple on a wooden table",width:832,height:1216,format:"webp",safe_mode:false})});
+    const t=await r.text();
+    if(r.ok){
+      const j=JSON.parse(t);
+      d.className="diag ok";
+      d.textContent="OK "+r.status+" · immagini: "+((j.images||[]).length)+" · base64 "+(j.images&&j.images[0]?j.images[0].length:0)+" char";
+    }else{
+      d.className="diag";
+      d.textContent="HTTP "+r.status+" · "+t.slice(0,220);
+    }
+  }catch(e){d.className="diag";d.textContent="rete/CORS: "+e.message;}
+});
 const openSet=()=>{measureTop();$("#set").classList.add("on");$("#set").scrollTop=0;setTimeout(()=>$("#key").focus(),120);};
 gear.addEventListener("click",openSet);$("#keybar").addEventListener("click",openSet);
 $("#closeSet").addEventListener("click",()=>$("#set").classList.remove("on"));
@@ -396,7 +415,7 @@ function wantsImage(t){
 }
 
 /* ---------- immagini ---------- */
-const IMG_MODELS=["lustify-v8","lustify-v7","lustify-sdxl","venice-sd35"];
+const IMG_MODELS=["lustify-v8","lustify-v7","lustify-sdxl","chroma","venice-sd35"];
 const NEG="blurry, low quality, watermark, text, deformed hands, extra fingers";
 let capsCache=null;
 async function caps(){
@@ -408,22 +427,37 @@ async function caps(){
   }catch(e){capsCache=new Map();}
   return capsCache;
 }
+function sizeFor(ratio,divisor){
+  const d=divisor&&divisor>1?divisor:8;
+  const p=(ratio||"1:1").split(":").map(Number);
+  const w=p[0]||1,h=p[1]||1,base=1024;
+  let W=Math.round(base*w/Math.max(w,h)),H=Math.round(base*h/Math.max(w,h));
+  W=Math.max(d,Math.round(W/d)*d);H=Math.max(d,Math.round(H/d)*d);
+  return [W,H];
+}
 function imgBody(model,prompt,o,c){
-  const b={model,prompt,negative_prompt:NEG,safe_mode:false,format:"webp",variants:o.n||1};
+  const lim=(c&&c.promptCharacterLimit)||1400;
+  const b={model,prompt:String(prompt).slice(0,lim),negative_prompt:NEG,safe_mode:false,format:"webp",variants:o.n||1};
   if(o.seed!=null)b.seed=o.seed;
-  if((c&&c.aspectRatios&&c.aspectRatios.length)||model!=="venice-sd35")b.aspect_ratio=o.ratio||"1:1";
-  else{const [w,h]=(o.ratio||"1:1").split(":").map(Number);const base=1024;
-    b.width=Math.round(base*w/Math.max(w,h));b.height=Math.round(base*h/Math.max(w,h));}
+  if(c&&c.aspectRatios&&c.aspectRatios.length){
+    const r=o.ratio&&c.aspectRatios.includes(o.ratio)?o.ratio:(c.defaultAspectRatio||"1:1");
+    b.aspect_ratio=r;
+  }else{
+    const [W,H]=sizeFor(o.ratio,c&&c.widthHeightDivisor);
+    b.width=W;b.height=H;
+  }
   return b;
 }
 async function imgCall(model,b){
-  for(let i=0;i<3;i++){
+  for(let i=0;i<2;i++){
     const r=await fetch(API+"/image/generate",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+cfg.key},body:JSON.stringify(b)});
     if(r.ok)return {ok:true,json:await r.json()};
+    const txt=await r.text().catch(()=>"");
     if(r.status===429){await new Promise(s=>setTimeout(s,Number(r.headers.get("retry-after")||3)*1000));continue;}
-    return {ok:false,status:r.status,json:await r.json().catch(()=>({}))};
+    let j={};try{j=JSON.parse(txt);}catch(e){}
+    return {ok:false,status:r.status,json:j,raw:txt.slice(0,160)};
   }
-  return {ok:false,status:429,json:{}};
+  return {ok:false,status:429,json:{},raw:"rate limit"};
 }
 async function expandPrompt(t){
   try{
@@ -457,9 +491,9 @@ async function doImage(prompt,o){
       }
       save();return;
     }
-    last="HTTP "+r.status;
+    last=`${model}: HTTP ${r.status}${r.raw?" · "+r.raw:""}`;
   }
-  const e={r:"err",t:"generazione fallita: "+last};convo.push(e);render(e);save();
+  const e={r:"err",t:"generazione fallita\n"+last};convo.push(e);render(e);save();
 }
 
 /* ---------- web ---------- */
@@ -554,6 +588,9 @@ async function handle(raw){
       const finalPrompt=follow?lastPrompt:await expandPrompt(prompt);
       lastPrompt=finalPrompt;
       await doImage(finalPrompt,{ratio,n});
+    }catch(err){
+      const msg="errore immagine: "+(err&&err.message?err.message:String(err));
+      convo.push({r:"err",t:msg});render({r:"err",t:msg});save();
     }finally{busy=false;send.classList.remove("stop");sendLbl.textContent="INVIA";}
     return;
   }
