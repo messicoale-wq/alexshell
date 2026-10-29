@@ -514,7 +514,7 @@ async function callAPI(el,tx,msgs,extra){
       messages:[{role:"system",content:sysPrompt()},...msgs],
       venice_parameters:{enable_web_search:(extra&&extra.web)||cfg.web,enable_web_citations:true,strip_thinking_response:true}};
     const r=await fetch(API+"/chat/completions",{method:"POST",signal:ctrl.signal,
-      headers:{"Content-Type":"application/json",Authorization:"Bearer "+cfg.key},body:JSON.stringify(body)});
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+cfg.key},body:JSON.stringify(body)});
     if(!r.ok){
       let b="";try{b=(await r.text()).slice(0,200);}catch(e){}
       const hint=r.status===401?"\n401: chiave non valida. Apri ⚙ e ricontrolla.":
