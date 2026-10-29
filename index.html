@@ -19,6 +19,7 @@ html.solo .phone { max-width:none; height:100dvh; border:0; border-radius:0; box
 .topwrap { position:relative; z-index:30; background:#000; flex:0 0 auto; border-bottom:1px solid rgba(0,255,102,.55); box-shadow:0 4px 14px rgba(0,0,0,.9); user-select:none; }
 .sbar { display:flex; justify-content:space-between; align-items:center; padding:10px 14px 8px; font-size:12px; font-weight:700; color:#9dffc0; letter-spacing:.14em; }
 html.solo .sbar { padding-top:calc(32px + env(safe-area-inset-top)); }
+.sbar b { color:#00ff66; font-weight:700; }
 .sbar .r { display:flex; gap:7px; align-items:center; }
 header { padding:6px 12px 12px; }
 .brand { display:flex; align-items:center; gap:9px; }
@@ -145,7 +146,7 @@ textarea.fld { min-height:80px; resize:vertical; line-height:1.5; font-size:13px
   <div class="vign"></div><div class="scan"></div>
   <div class="z">
     <div class="topwrap" id="topwrap">
-      <div class="sbar"><span>SECURE</span><span class="r"><span>ANON-NET</span><span>▮▮▮</span><span id="batt">100%</span></span></div>
+      <div class="sbar"><span>SECURE · <b id="clock">--:--</b></span><span class="r"><span>ANON-NET</span><span>▮▮▮</span><span id="batt">100%</span></span></div>
       <header>
         <div class="brand">
           <svg class="seal sm" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
@@ -187,9 +188,9 @@ textarea.fld { min-height:80px; resize:vertical; line-height:1.5; font-size:13px
       </div>
       <div id="chat">
         <div id="log"></div>
-        <div id="keybar" class="on"><b>!</b> chiave API non collegata<span class="ar">›</span></div>
+        <div id="keybar" class="on"><b>!</b> chiave API non collegata — tocca per inserirla<span class="ar">›</span></div>
         <div class="att" id="att"><img id="attImg" alt=""><span id="attName">allegato</span><b id="attX">✕</b></div>
-        <div class="trace"><span>nodi <b id="t1">0</b></span><span>ping <b id="t2">0ms</b></span><span>aes <b>256</b></span><span>build <b>2.1</b></span><span>id <b id="t3">L9XU</b></span></div>
+        <div class="trace"><span>nodi <b id="t1">0</b></span><span>ping <b id="t2">0ms</b></span><span>aes <b>256</b></span><span>build <b>2.2</b></span><span>id <b id="t3">L9XU</b></span></div>
         <div class="bar">
           <span class="p">&gt;</span>
           <button class="clip" id="clip" aria-label="allega immagine">＋</button>
@@ -254,6 +255,8 @@ function drawRain(){
   requestAnimationFrame(drawRain);
 }
 sizeRain();drawRain();addEventListener("resize",sizeRain);
+function tickClock(){const d=new Date();const el=$("#clock");if(el)el.textContent=String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
+tickClock();setInterval(tickClock,15000);
 setInterval(()=>{$("#t1").textContent=1800+Math.floor(Math.random()*900);$("#t2").textContent=(18+Math.floor(Math.random()*70))+"ms";},1400);
 $("#t3").textContent=Math.random().toString(36).slice(2,6).toUpperCase();
 const toBottom=()=>{log.scrollTop=log.scrollHeight;};
@@ -341,7 +344,9 @@ async function runImgTest(){
 }
 $("#testImg").addEventListener("click",runImgTest);
 const openSet=()=>{measureTop();$("#set").classList.add("on");$("#set").scrollTop=0;setTimeout(()=>$("#key").focus(),120);};
-gear.addEventListener("click",openSet);$("#keybar").addEventListener("click",openSet);
+gear.addEventListener("click",openSet);
+gear.addEventListener("pointerup",openSet);
+$("#keybar").addEventListener("click",openSet);
 $("#closeSet").addEventListener("click",()=>$("#set").classList.remove("on"));
 
 let code="",tries=0,lastTap=0;
@@ -509,7 +514,7 @@ async function callAPI(el,tx,msgs,extra){
       messages:[{role:"system",content:sysPrompt()},...msgs],
       venice_parameters:{enable_web_search:(extra&&extra.web)||cfg.web,enable_web_citations:true,strip_thinking_response:true}};
     const r=await fetch(API+"/chat/completions",{method:"POST",signal:ctrl.signal,
-      headers:{"Content-Type":"application/json",Authorization:"Bearer "+cfg.key},body:JSON.stringify(body)});
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+cfg.key},body:JSON.stringify(body)});
     if(!r.ok){
       let b="";try{b=(await r.text()).slice(0,200);}catch(e){}
       const hint=r.status===401?"\n401: chiave non valida. Apri ⚙ e ricontrolla.":
@@ -622,7 +627,7 @@ function unlock(){
     setTimeout(()=>bot(cfg.key?"canale aperto, Alex. dimmi pure: testo, immagini, ricerche."
       :"sei dentro, ma il canale è muto: tocca la barra rossa e incolla la chiave API."),200);
   }
-  if(!cfg.key)setTimeout(openSet,400);
+  if(!cfg.key)setTimeout(openSet,250);
 }
 paint();
 if(sessionStorage.getItem("anon_unlocked")){boot.classList.add("hide");unlock();}
