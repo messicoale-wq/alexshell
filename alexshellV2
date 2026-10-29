@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
+<title>Anonymous Shell</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{background:#000;margin:0;min-height:100%;padding:0}
+  .wrap{display:flex;justify-content:center;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,monospace}
+  .phone{position:relative;width:100%;max-width:390px;height:672px;overflow:hidden;
+    background:#000;border:1px solid #00ff6633;border-radius:22px;
+    box-shadow:0 0 0 1px #00ff6611 inset;display:flex;flex-direction:column;color:#b6ffcd}
+  #rainbox{position:absolute;inset:0;pointer-events:none;opacity:.30;z-index:0}
+  #rain{width:100%;height:100%;display:block}
+  .scan{position:absolute;inset:0;pointer-events:none;z-index:3;
+    background:repeating-linear-gradient(180deg,#0000 0 2px,#00000066 2px 3px);opacity:.55}
+  .vign{position:absolute;inset:0;pointer-events:none;z-index:2;
+    background:radial-gradient(ellipse at 50% 40%,#0000 30%,#000000cc 100%)}
+  .z{position:relative;z-index:4;display:flex;flex-direction:column;height:100%}
+  .sbar{display:flex;justify-content:space-between;align-items:center;
+    padding:7px 14px 3px;font-size:10px;color:#00ff66aa;letter-spacing:.08em}
+  .sbar .r{display:flex;gap:6px;align-items:center}
+  header{padding:2px 12px 9px;border-bottom:1px solid #00ff6622}
+  .brand{display:flex;align-items:center;gap:8px}
+  .seal{flex:none;color:#00ff66;filter:drop-shadow(0 0 7px #00ff6699)}
+  .seal.sm{width:32px;height:32px}
+  .wordmark{font-size:10px;letter-spacing:.24em;color:#00ff66;font-weight:700;
+    text-shadow:0 0 8px #00ff6688;animation:gl 6s infinite;white-space:nowrap;flex:none}
+  @keyframes gl{0%,92%,100%{transform:none;opacity:1}
+    93%{transform:translate(-2px,0);opacity:.7;text-shadow:2px 0 #ff004c,-2px 0 #00e5ff}
+    95%{transform:translate(2px,0);opacity:1}97%{transform:translate(-1px,1px);opacity:.8}}
+  .gear{position:relative;margin-left:auto;flex:none;height:26px;padding:0 8px;border-radius:7px;
+    background:#00ff6615;border:1px solid #00ff6677;color:#00ff66;cursor:pointer;
+    display:flex;align-items:center;gap:4px;font-family:inherit;font-size:9px;letter-spacing:.1em}
+  .gear:active{background:#00ff6633}
+  .gear .warn{position:absolute;top:-4px;right:-4px;width:9px;height:9px;border-radius:50%;
+    background:#ff004c;box-shadow:0 0 8px #ff004c;display:none}
+  .gear.nokey .warn{display:block}
+  .dot{width:7px;height:7px;border-radius:50%;background:#00ff66;flex:none;
+    box-shadow:0 0 8px #00ff66;animation:pulse 1.6s infinite}
+  @keyframes pulse{50%{opacity:.25}}
+  .idrow{display:flex;align-items:center;gap:8px;margin-top:7px}
+  .uname{font-size:13px;font-weight:700;letter-spacing:.1em;color:#d8ffe7;flex:none;
+    border-left:2px solid #00ff66;padding-left:7px}
+  .motto{font-size:8px;line-height:1.35;letter-spacing:.06em;color:#00ff6699;
+    border-left:1px solid #00ff6633;padding-left:7px;text-transform:uppercase}
+  .motto i{color:#00ff66;font-style:normal}
+  .screen{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+  #boot{padding:16px 14px;font-size:11px;line-height:1.75;color:#00ff66aa;overflow:hidden}
+  #boot .ok{color:#00ff66}#boot .warn{color:#ffb020}
+  #lock{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:13px;padding:8px 22px;overflow:hidden}
+  #lock.hide,#boot.hide{display:none}
+  .seal.big{width:110px;height:110px;filter:drop-shadow(0 0 18px #00ff6677)}
+  .spin{animation:rot 24s linear infinite;transform-origin:60px 60px}
+  @keyframes rot{to{transform:rotate(360deg)}}
+  .lt{font-size:11px;letter-spacing:.28em;color:#00ff66;text-align:center}
+  .lh{font-size:9px;letter-spacing:.1em;color:#00ff6670;text-align:center;margin-top:-5px}
+  .dots{display:flex;gap:12px;margin:2px 0 0}
+  .dots i{width:13px;height:13px;border:1px solid #00ff6666;border-radius:3px;display:block;transition:.12s}
+  .dots i.on{background:#00ff66;border-color:#00ff66;box-shadow:0 0 10px #00ff66}
+  .dots.err i{border-color:#ff004c}
+  .shake{animation:sh .34s}
+  @keyframes sh{0%,100%{transform:none}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+  .msg{font-size:10px;letter-spacing:.1em;height:12px;color:#ff004c;text-align:center}
+  .msg.ok{color:#00ff66}
+  .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:216px}
+  .pad button{background:#00ff6608;border:1px solid #00ff6633;color:#b6ffcd;
+    font-family:inherit;font-size:17px;padding:10px 0;border-radius:9px;cursor:pointer;transition:.1s}
+  .pad button:active{background:#00ff6626;border-color:#00ff66;box-shadow:0 0 14px #00ff6655}
+  .pad .fn{font-size:11px;letter-spacing:.1em;color:#00ff66aa}
+  .hint{font-size:8px;letter-spacing:.14em;color:#00ff6644;text-align:center}
+  #chat{display:none;flex-direction:column;flex:1;min-height:0}
+  #chat.on{display:flex}
+  #log{flex:1;overflow-y:auto;padding:12px 12px 4px;display:flex;flex-direction:column;gap:9px;
+    scrollbar-width:thin;scrollbar-color:#00ff6633 transparent}
+  #log::-webkit-scrollbar{width:3px}
+  #log::-webkit-scrollbar-thumb{background:#00ff6633}
+  .line{font-size:12px;line-height:1.55;word-break:break-word;animation:in .18s}
+  @keyframes in{from{opacity:0;transform:translateY(4px)}}
+  .line.me{align-self:flex-end;max-width:86%;background:#00ff6612;border:1px solid #00ff6633;
+    border-radius:10px 10px 2px 10px;padding:7px 10px;color:#d8ffe7}
+  .line.bot{max-width:94%;color:#9dffc0;white-space:pre-wrap}
+  .line.bot .who{color:#00ff66;font-weight:700;font-size:11px;letter-spacing:.1em}
+  .line.err{color:#ff7a9a;font-size:11px;border-left:2px solid #ff004c;padding-left:8px;white-space:pre-wrap}
+  .line.sys{align-self:center;font-size:9px;letter-spacing:.14em;color:#00ff6666;text-align:center}
+  .caret{display:inline-block;width:6px;height:11px;background:#00ff66;vertical-align:-1px;
+    animation:bl .8s steps(1) infinite}
+  @keyframes bl{50%{opacity:0}}
+  #keybar{display:none;align-items:center;gap:7px;margin:0 10px 6px;padding:8px 10px;
+    border:1px dashed #ff004c88;border-radius:9px;background:#ff004c10;color:#ff9ab4;
+    font-size:10px;letter-spacing:.06em;cursor:pointer}
+  #keybar.on{display:flex}
+  #keybar b{color:#ff004c}
+  #keybar span.ar{margin-left:auto;color:#ff004c;font-size:12px}
+  .bar{display:flex;align-items:center;gap:8px;padding:9px 10px 12px;
+    border-top:1px solid #00ff6622;background:#000000aa}
+  .bar .p{color:#00ff66;font-size:13px;font-weight:700}
+  .bar input{flex:1;background:transparent;border:0;outline:0;color:#d8ffe7;
+    font-family:inherit;font-size:13px;min-width:0;padding:4px 0}
+  .bar input::placeholder{color:#00ff6644}
+  .bar button{background:#00ff6615;border:1px solid #00ff6644;color:#00ff66;
+    width:34px;height:34px;border-radius:9px;font-size:14px;cursor:pointer;flex:none;
+    display:grid;place-items:center}
+  .bar button:active{background:#00ff6633;box-shadow:0 0 14px #00ff6655}
+  .bar button.stop{background:#ff004c22;border-color:#ff004c;color:#ff7a9a}
+  .trace{display:flex;gap:12px;padding:4px 12px 8px;font-size:8px;letter-spacing:.1em;color:#00ff6655}
+  .trace b{color:#00ff66aa;font-weight:400}
+  #set{position:absolute;inset:0;z-index:20;background:#000000f7;display:none;
+    flex-direction:column;padding:12px 14px 16px;gap:9px;overflow-y:auto}
+  #set.on{display:flex}
+  .seth{display:flex;align-items:center;gap:8px;border-bottom:1px solid #00ff6633;padding-bottom:8px}
+  .seth b{font-size:11px;letter-spacing:.2em;color:#00ff66}
+  .seth button{margin-left:auto;background:#00ff6615;border:1px solid #00ff6644;color:#00ff66;
+    width:26px;height:26px;border-radius:7px;cursor:pointer;font-size:12px}
+  .lbl{font-size:8px;letter-spacing:.16em;color:#00ff6688;text-transform:uppercase;margin-top:3px}
+  .lbl.hl{color:#00ff66}
+  .fld{background:#00ff660a;border:1px solid #00ff6633;border-radius:8px;color:#d8ffe7;
+    font-family:inherit;font-size:12px;padding:8px 9px;outline:0;width:100%}
+  .fld:focus{border-color:#00ff66}
+  .fld.hl{border-color:#00ff66;box-shadow:0 0 12px #00ff6633}
+  textarea.fld{min-height:74px;resize:vertical;line-height:1.5}
+  .row{display:flex;gap:7px}
+  .row .fld{flex:1}
+  .sbtn{background:#00ff6615;border:1px solid #00ff6644;color:#00ff66;border-radius:8px;
+    font-family:inherit;font-size:10px;letter-spacing:.1em;padding:9px 10px;cursor:pointer}
+  .sbtn.pri{background:#00ff66;border-color:#00ff66;color:#001a0a;font-weight:700}
+  .sbtn.dng{border-color:#ff004c66;color:#ff7a9a}
+  .sbtn:active{opacity:.75}
+  .note{font-size:8.5px;line-height:1.6;color:#00ff6666;letter-spacing:.03em}
+  .note a{color:#00ff66}
+  .st{font-size:9px;letter-spacing:.1em;padding:6px 8px;border-radius:6px;border:1px solid #00ff6633;
+    color:#00ff66aa;text-align:center}
+  .st.ok{color:#00ff66;border-color:#00ff6666;background:#00ff6610}
+  .keyrow{display:flex;gap:6px}
+  .keyrow .fld{flex:1;font-size:10px;letter-spacing:.02em}
+  .keyrow button{flex:none;width:34px;background:#00ff6615;border:1px solid #00ff6644;
+    color:#00ff66;border-radius:8px;cursor:pointer;font-size:11px;font-family:inherit}
+  .diag{font-size:8.5px;line-height:1.5;color:#ff9ab4;min-height:0}
+  .diag.ok{color:#00ff66}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <path id="arcTop" d="M16,60 A44,44 0 0 1 104,60"/>
+  <path id="arcBot" d="M16,60 A44,44 0 0 0 104,60"/>
+  <g id="fawkes">
+    <path d="M50 5C22 5 8 25 8 48c0 26 18 48 32 62 5 5 10 8 10 8s5-3 10-8c14-14 32-36 32-62 0-23-14-43-42-43Z"/>
+    <path d="M26 47c6-8 16-8 19 0-3 6-15 6-19 0Z"/>
+    <path d="M74 47c-6-8-16-8-19 0 3 6 15 6 19 0Z"/>
+    <path d="M23 36c6-4 13-4 18-1M77 36c-6-4-13-4-18-1"/>
+    <path d="M36 78c8-6 14 0 14 0s6-6 14 0c-6 6-14 4-14 4s-8 2-14-4Z"/>
+    <path d="M38 92c5 8 19 8 24 0"/>
+    <path d="M50 99l-4 12 4 7 4-7-4-12Z"/>
+  </g>
+</defs></svg>
+
+<div class="wrap">
+<div class="phone">
+  <div id="rainbox"><canvas id="rain"></canvas></div>
+  <div class="vign"></div>
+  <div class="scan"></div>
+  <div class="z">
+    <div class="sbar">
+      <span id="clock">--:--</span>
+      <span class="r"><span>ANON-NET</span><span>▮▮▮</span><span id="batt">100%</span></span>
+    </div>
+    <header>
+      <div class="brand">
+        <svg class="seal sm" viewBox="0 0 120 120" fill="none" stroke="currentColor"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="60" cy="60" r="56" stroke-width="1.6" opacity=".55"/>
+          <circle cx="60" cy="60" r="50" stroke-width=".7" opacity=".3" stroke-dasharray="2 4"/>
+          <text font-size="9.5" font-family="ui-monospace,monospace" letter-spacing="3.4"
+            fill="currentColor" stroke="none" font-weight="700">
+            <textPath href="#arcTop" startOffset="50%" text-anchor="middle">ANONYMOUS</textPath></text>
+          <text font-size="5.6" font-family="ui-monospace,monospace" letter-spacing="1.5"
+            fill="currentColor" stroke="none" opacity=".8">
+            <textPath href="#arcBot" startOffset="50%" text-anchor="middle">WE ARE LEGION</textPath></text>
+          <use href="#fawkes" transform="translate(39,34) scale(.42)" stroke-width="6"/>
+        </svg>
+        <span class="wordmark">ANONYMOUS</span>
+        <button class="gear nokey" id="gear" aria-label="impostazioni">⚙ API<span class="warn"></span></button>
+        <span class="dot"></span>
+      </div>
+      <div class="idrow">
+        <span class="uname">Alex1611</span>
+        <span class="motto"><i>We are legion.</i> We do not forgive. We do not forget. <i>Expect us.</i></span>
+      </div>
+    </header>
+    <div class="screen">
+      <div id="boot"></div>
+      <div id="lock">
+        <svg class="seal big" viewBox="0 0 120 120" fill="none" stroke="currentColor"
+          stroke-linecap="round" stroke-linejoin="round">
+          <g class="spin">
+            <circle cx="60" cy="60" r="56" stroke-width="1.8" opacity=".7"/>
+            <circle cx="60" cy="60" r="50" stroke-width=".8" opacity=".35" stroke-dasharray="2 4"/>
+            <text font-size="9.5" font-family="ui-monospace,monospace" letter-spacing="3.4"
+              fill="currentColor" stroke="none" font-weight="700">
+              <textPath href="#arcTop" startOffset="50%" text-anchor="middle">ANONYMOUS</textPath></text>
+            <text font-size="5.8" font-family="ui-monospace,monospace" letter-spacing="1.6"
+              fill="currentColor" stroke="none" opacity=".85">
+              <textPath href="#arcBot" startOffset="50%" text-anchor="middle">WE ARE LEGION</textPath></text>
+          </g>
+          <use href="#fawkes" transform="translate(39,34) scale(.42)" stroke-width="6"/>
+        </svg>
+        <div class="lt">ACCESSO RISERVATO</div>
+        <div class="lh">inserisci il codice a 6 cifre</div>
+        <div class="dots" id="dots"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="msg" id="lmsg"></div>
+        <div class="pad" id="pad">
+          <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+          <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+          <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+          <button class="fn" data-k="del">DEL</button>
+          <button data-k="0">0</button>
+          <button class="fn" data-k="ok">INVIO</button>
+        </div>
+        <div class="hint">we do not forgive · we do not forget</div>
+      </div>
+      <div id="chat">
+        <div id="log"></div>
+        <div id="keybar"><b>!</b> chiave API non collegata<span class="ar">›</span></div>
+        <div class="trace">
+          <span>nodi <b id="t1">0</b></span><span>ping <b id="t2">0ms</b></span>
+          <span>aes <b>256</b></span><span>id <b id="t3">····</b></span>
+        </div>
+        <div class="bar">
+          <span class="p">&gt;</span>
+          <input id="in" placeholder="scrivi normalmente..." autocomplete="off" spellcheck="false">
+          <button id="send" aria-label="invia">↵</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="set">
+    <div class="seth"><b>IMPOSTAZIONI</b><button id="closeSet" aria-label="chiudi">✕</button></div>
+    <div class="st" id="stato">stato: modalità demo locale</div>
+    <div class="lbl hl">1 · incolla qui la chiave api venice</div>
+    <div class="keyrow">
+      <input class="fld hl" id="key" type="password" placeholder="VENICE_INFERENCE_KEY_..." autocomplete="off" spellcheck="false">
+      <button id="eye" aria-label="mostra">👁</button>
+      <button id="paste" aria-label="incolla">⎘</button>
+    </div>
+    <div class="diag" id="diag"></div>
+    <div class="lbl">2 · modello</div>
+    <input class="fld" id="model" list="models" placeholder="venice-uncensored" autocomplete="off" spellcheck="false">
+    <datalist id="models">
+      <option value="venice-uncensored"></option>
+      <option value="venice-uncensored-max"></option>
+      <option value="llama-3.1-405b"></option>
+      <option value="qwen3-235b-a22b"></option>
+    </datalist>
+    <div class="lbl">3 · carattere della shell</div>
+    <textarea class="fld" id="sys" spellcheck="false"></textarea>
+    <div class="row">
+      <button class="sbtn pri" id="saveCfg">salva</button>
+      <button class="sbtn" id="test">prova chiave</button>
+    </div>
+    <div class="row">
+      <button class="sbtn dng" id="wipe">cancella chiave</button>
+    </div>
+    <div class="note">Chiave da <a href="https://venice.ai/settings/api" target="_blank" rel="noopener">venice.ai/settings/api</a>.
+      Resta salvata solo su questo dispositivo.</div>
+  </div>
+</div>
+</div>
+
+<script>
+(function(){
+  const PW="161191", $=s=>document.querySelector(s);
+  const boot=$("#boot"), lock=$("#lock"), chat=$("#chat"), dots=$("#dots"),
+        lmsg=$("#lmsg"), log=$("#log"), inp=$("#in"), send=$("#send"), gear=$("#gear");
+
+  const cv=$("#rain"), ctx=cv.getContext("2d");
+  let cols=0, drops=[], rainOn=true;
+  function sizeRain(){const r=cv.parentElement.getBoundingClientRect();
+    cv.width=r.width;cv.height=r.height;cols=Math.floor(cv.width/13);
+    drops=new Array(cols).fill(0).map(()=>Math.random()*cv.height/16);}
+  const glyphs="アイウエオカキクケコサシスセソタチツテトナニヌネノﾊﾋﾌﾍﾎ0123456789ABCDEF$#%&@";
+  function drawRain(){
+    if(rainOn){
+      ctx.fillStyle="rgba(0,0,0,.09)";ctx.fillRect(0,0,cv.width,cv.height);
+      ctx.font="13px ui-monospace,monospace";
+      for(let i=0;i<cols;i++){
+        const ch=glyphs[Math.floor(Math.random()*glyphs.length)], y=drops[i]*16;
+        ctx.fillStyle=Math.random()>.96?"#d8ffe7":"#00ff66";
+        ctx.fillText(ch,i*13,y);
+        if(y>cv.height&&Math.random()>.975) drops[i]=0;
+        drops[i]++;
+      }
+    }
+    requestAnimationFrame(drawRain);
+  }
+  sizeRain();drawRain();addEventListener("resize",sizeRain);
+
+  function tickClock(){const d=new Date();
+    $("#clock").textContent=String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
+  tickClock();setInterval(tickClock,20000);
+  setInterval(()=>{$("#t1").textContent=1800+Math.floor(Math.random()*900);
+    $("#t2").textContent=(18+Math.floor(Math.random()*70))+"ms";},1400);
+  $("#t3").textContent=Math.random().toString(36).slice(2,6).toUpperCase();
+
+  const bootLines=[["[ ok ] avvio kernel cifrato","ok"],["[ ok ] handshake nodo entry-guard","ok"],
+    ["[ ok ] tunnel tor · 7 hop","ok"],["[ ok ] fingerprint spoof","ok"],
+    ["[warn] dns leak shield attivo","warn"],["[ ok ] chiave aes-256 generata","ok"],
+    ["[ ok ] shell in ascolto","ok"]];
+  let bi=0;const bT=setInterval(()=>{if(bi>=bootLines.length){clearInterval(bT);return;}
+    const [t,c]=bootLines[bi++];const d=document.createElement("div");
+    d.className=c;d.textContent=t;boot.appendChild(d);},150);
+
+  const CK="anon_cfg_v3", MK="anon_convo_v1", PREFIX="VENICE_INFERENCE_KEY_";
+  const DEF_SYS="Sei la shell di Alex1611 dentro un terminale in stile Anonymous e Matrix. "+
+    "Rispondi in italiano, tono asciutto, diretto, da hacker. Vai al punto, niente giri di parole, "+
+    "nessuna prefazione. Messaggi brevi, massimo 4-5 righe, a meno che serva di più. "+
+    "Ogni tanto una formula del manifesto, senza esagerare.";
+  let cfg={key:"",model:"venice-uncensored",sys:DEF_SYS};
+  try{const s=JSON.parse(localStorage.getItem(CK))||JSON.parse(localStorage.getItem("anon_cfg_v2"));
+    if(s)cfg=Object.assign(cfg,s);}catch(e){}
+  $("#key").value=cfg.key;$("#model").value=cfg.model;$("#sys").value=cfg.sys;
+
+  function clean(k){return k.replace(/[\s\u200b]/g,"").replace(/^Bearer\s*/i,"").replace(/^["']|["']$/g,"");}
+  function diagnose(k){
+    const d=$("#diag");
+    if(!k){d.className="diag";d.textContent="";return;}
+    if(!k.startsWith(PREFIX)){d.className="diag";
+      d.textContent="manca il prefisso "+PREFIX+" — hai incollato un'altra cosa?";return;}
+    if(k.length<50){d.className="diag";
+      d.textContent="chiave troppo corta ("+k.length+" caratteri): copia troncata, ricopiala tutta.";return;}
+    d.className="diag ok";
+    d.textContent="formato ok · "+k.length+" caratteri · "+k.slice(0,20)+"…"+k.slice(-4);
+  }
+  $("#key").addEventListener("input",()=>{
+    const c=clean($("#key").value);
+    if(c!==$("#key").value)$("#key").value=c;
+    diagnose(c);
+  });
+  $("#eye").addEventListener("click",()=>{
+    $("#key").type=$("#key").type==="password"?"text":"password";});
+  $("#paste").addEventListener("click",async()=>{
+    try{const t=await navigator.clipboard.readText();
+      $("#key").value=clean(t);diagnose($("#key").value);}
+    catch(e){$("#diag").className="diag";
+      $("#diag").textContent="lettura appunti negata: incolla a mano tenendo premuto nel campo.";}
+  });
+
+  function paintGear(){
+    gear.classList.toggle("nokey",!cfg.key);
+    $("#keybar").classList.toggle("on",!cfg.key);
+    $("#stato").textContent=cfg.key?"stato: collegata all'API · "+cfg.model:"stato: modalità demo locale";
+    $("#stato").className="st"+(cfg.key?" ok":"");
+  }
+  paintGear();diagnose(cfg.key);
+
+  $("#saveCfg").addEventListener("click",()=>{
+    cfg.key=clean($("#key").value);$("#key").value=cfg.key;
+    cfg.model=$("#model").value.trim()||"venice-uncensored";
+    cfg.sys=$("#sys").value.trim()||DEF_SYS;
+    localStorage.setItem(CK,JSON.stringify(cfg));paintGear();diagnose(cfg.key);
+    sys(cfg.key?"chiave salvata · "+cfg.key.length+" caratteri":"impostazioni salvate · demo locale");
+  });
+  $("#wipe").addEventListener("click",()=>{
+    cfg.key="";$("#key").value="";localStorage.setItem(CK,JSON.stringify(cfg));
+    paintGear();diagnose("");sys("chiave rimossa · demo locale");
+  });
+  $("#test").addEventListener("click",async()=>{
+    const k=clean($("#key").value), m=$("#model").value.trim()||"venice-uncensored";
+    $("#stato").textContent="stato: verifica in corso...";$("#stato").className="st";
+    try{
+      const r=await fetch("https://api.venice.ai/api/v1/chat/completions",{
+        method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+k},
+        body:JSON.stringify({model:m,messages:[{role:"user",content:"ping"}],max_tokens:8})});
+      $("#stato").textContent=r.ok?"stato: chiave valida":"stato: errore "+r.status;
+      $("#stato").className="st"+(r.ok?" ok":"");
+      if(!r.ok){const t=await r.text().catch(()=>"");
+        $("#diag").className="diag";$("#diag").textContent="HTTP "+r.status+" · "+t.slice(0,120);}
+    }catch(e){
+      $("#stato").textContent="stato: rete bloccata o CORS";$("#stato").className="st";
+      $("#diag").className="diag";$("#diag").textContent="la chiamata non è partita: hosting o rete.";
+    }
+  });
+  function openSet(){$("#set").classList.add("on");$("#set").scrollTop=0;
+    setTimeout(()=>$("#key").focus(),120);}
+  gear.addEventListener("click",openSet);
+  $("#keybar").addEventListener("click",openSet);
+  $("#closeSet").addEventListener("click",()=>$("#set").classList.remove("on"));
+
+  let code="",tries=0;
+  const paint=()=>[...dots.children].forEach((el,i)=>el.classList.toggle("on",i<code.length));
+  function press(k){
+    if(k==="del"){code=code.slice(0,-1);lmsg.textContent="";paint();return;}
+    if(k==="ok"){check();return;}
+    if(code.length>=6)return;
+    code+=k;lmsg.textContent="";paint();
+    if(code.length===6)setTimeout(check,140);
+  }
+  function check(){
+    if(code===PW){lmsg.className="msg ok";lmsg.textContent="ACCESSO CONCESSO";
+      sessionStorage.setItem("anon_unlocked","1");setTimeout(unlock,520);}
+    else{tries++;dots.classList.add("err");lock.classList.add("shake");
+      lmsg.className="msg";lmsg.textContent="ACCESSO NEGATO · TENTATIVO "+tries;
+      setTimeout(()=>{dots.classList.remove("err");lock.classList.remove("shake");
+        code="";paint();},420);}
+  }
+  $("#pad").addEventListener("click",e=>{const b=e.target.closest("button");if(b)press(b.dataset.k);});
+  addEventListener("keydown",e=>{
+    if(!lock.classList.contains("hide")){
+      if(/^[0-9]$/.test(e.key))press(e.key);
+      else if(e.key==="Backspace")press("del");
+      else if(e.key==="Enter")press("ok");
+    }
+  });
+
+  let convo=[];
+  const esc=s=>s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  function save(){localStorage.setItem(MK,JSON.stringify(convo.slice(-40)));}
+  function addLine(cls,html,raw){
+    const d=document.createElement("div");d.className="line "+cls;d.innerHTML=html;
+    if(raw)d.dataset.raw=raw;log.appendChild(d);log.scrollTop=log.scrollHeight;return d;
+  }
+  function sys(t){addLine("sys","— "+t+" —");}
+  function render(e){
+    if(e.r==="me")addLine("me",esc(e.t),e.t);
+    else if(e.r==="sys")addLine("sys",esc(e.t),e.t);
+    else if(e.r==="err")addLine("err",esc(e.t),e.t);
+    else addLine("bot",'<span class="who">alex</span> '+esc(e.t),e.t);
+  }
+
+  const REPLIES=[
+    ["chi sei|come ti chiami|presentati","alex@shell: nessun volto, solo la maschera. sono in modalità demo — collega la chiave API e divento quella vera."],
+    ["ciao|salve|hey|buongiorno|buonasera","connessione stabile. sette hop dietro, uno schermo davanti. parlami."],
+    ["password|codice|sicurezza","il codice è 161191. la sessione resta su questo dispositivo, niente server."],
+    ["matrix|pillola|neo|morfeo","pillola rossa: resti nel paese delle meraviglie e ti mostro quanto è profonda la tana."],
+    ["anonymous|manifesto|legion","we are legion. we do not forgive. we do not forget. expect us."],
+    ["help|aiuto|comandi","/help · /whoami · /time · /trace · /mask · /lock · /clear"],
+    ["grazie|thanks","la rete non dimentica chi aiuta."],
+    ["ora|che ore|time","orologio del nodo: __T__. il tempo è un artefatto."],
+    ["trace|traccia|ip","nessun log persistente. ip mascherato, dns offuscato, fingerprint alterato."]
+  ];
+  const FALLBACK=["ricevuto. elaboro in locale, nessun pacchetto esce dalla maschera.",
+    "interessante. la rete ha sentito, ma non ha registrato.",
+    "annoto. se vuoi i comandi, scrivi /help.","segnale chiaro. prosegui."];
+  let fb=0;
+
+  let busy=false, ctrl=null;
+  function hist(){
+    return convo.filter(e=>e.r==="me"||e.r==="bot").slice(-12)
+      .map(e=>({role:e.r==="me"?"user":"assistant",content:e.t}));
+  }
+  async function callAPI(el,tx){
+    ctrl=new AbortController();
+    let out="";
+    try{
+      const r=await fetch("https://api.venice.ai/api/v1/chat/completions",{
+        method:"POST",signal:ctrl.signal,
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+cfg.key},
+        body:JSON.stringify({model:cfg.model,stream:true,
+          messages:[{role:"system",content:cfg.sys},...hist()]})});
+      if(!r.ok){
+        let b="";try{b=(await r.text()).slice(0,200);}catch(e){}
+        const hint=r.status===401?"\n401: chiave non valida. Apri ⚙, tocca 👁 per vederla, ricopiala.":
+          r.status===402?"\n402: crediti esauriti.":"";
+        throw new Error("HTTP "+r.status+(b?"\n"+b:"")+hint);
+      }
+      const rd=r.body.getReader(), dec=new TextDecoder();
+      let buf="";
+      while(true){
+        const {value,done}=await rd.read(); if(done)break;
+        buf+=dec.decode(value,{stream:true});
+        const parts=buf.split("\n"); buf=parts.pop();
+        for(const p of parts){
+          const l=p.trim(); if(!l.startsWith("data:"))continue;
+          const j=l.slice(5).trim(); if(j==="[DONE]")continue;
+          try{const o=JSON.parse(j);
+            const c=o.choices&&o.choices[0]&&o.choices[0].delta&&o.choices[0].delta.content;
+            if(c){out+=c;tx.textContent=out;log.scrollTop=log.scrollHeight;}
+          }catch(e){}
+        }
+      }
+      el.querySelector(".caret").remove();
+      if(!out.trim()){out="(risposta vuota dal nodo)";tx.textContent=out;}
+      convo.push({r:"bot",t:out});save();
+    }catch(e){
+      el.querySelector(".caret").remove();
+      const msg=e.name==="AbortError"?"interrotto dall'utente.":"errore di rete: "+e.message;
+      el.className="line err";el.textContent=msg;
+      convo.push({r:"err",t:msg});save();
+    }finally{busy=false;ctrl=null;send.textContent="↵";send.classList.remove("stop");}
+  }
+
+  function handle(raw){
+    const t=raw.trim(); if(!t||busy)return;
+    const e={r:"me",t};convo.push(e);render(e);save();
+    const low=t.toLowerCase();
+    if(low==="/clear"){convo=[];log.innerHTML="";save();sys("buffer svuotato");return;}
+    if(low==="/lock"){chat.classList.remove("on");lock.classList.remove("hide");
+      code="";paint();lmsg.textContent="";lmsg.className="msg";
+      sessionStorage.removeItem("anon_unlocked");return;}
+    if(low==="/mask"){rainOn=!rainOn;bot("pioggia "+(rainOn?"riattivata.":"sospesa. resta il silenzio."));return;}
+    if(low==="/whoami"){bot("tu: Alex1611 · id "+$("#t3").textContent+" · "+(cfg.key?"canale API":"demo locale"));return;}
+    if(low==="/trace"){bot("7 hop · exit frankfurt · dns offuscato · nessun log scritto.");return;}
+    if(cfg.key){
+      busy=true;send.textContent="■";send.classList.add("stop");
+      const el=addLine("bot",'<span class="who">alex</span> <span class="tx"></span><span class="caret"></span>');
+      callAPI(el,el.querySelector(".tx"));return;
+    }
+    if(!/^\//.test(low)){
+      for(const [p,a] of REPLIES){
+        if(new RegExp(p).test(low)){
+          const d=new Date();
+          bot(a.replace("__T__",String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")));
+          return;
+        }
+      }
+      bot(FALLBACK[fb++%FALLBACK.length]);
+    }
+  }
+  function bot(text){
+    const e={r:"bot",t:text};convo.push(e);
+    const el=addLine("bot",'<span class="who">alex</span> <span class="tx"></span><span class="caret"></span>');
+    const tx=el.querySelector(".tx");let i=0;
+    const iv=setInterval(()=>{
+      tx.textContent=text.slice(0,i+=2);log.scrollTop=log.scrollHeight;
+      if(i>=text.length){clearInterval(iv);el.querySelector(".caret").remove();save();}
+    },12);
+  }
+
+  send.addEventListener("click",()=>{
+    if(busy){if(ctrl)ctrl.abort();return;}
+    handle(inp.value);inp.value="";inp.focus();
+  });
+  inp.addEventListener("keydown",e=>{
+    if(e.key==="Enter"){e.preventDefault();if(!busy){handle(inp.value);inp.value="";}}
+  });
+
+  function unlock(){
+    lock.classList.add("hide");boot.classList.add("hide");chat.classList.add("on");
+    let saved=[];try{saved=JSON.parse(localStorage.getItem(MK))||[];}catch(e){}
+    convo=saved;saved.forEach(render);
+    if(saved.length)sys("sessione ripristinata dal dispositivo");
+    else{
+      sys("canale aperto · "+new Date().toLocaleDateString("it-IT"));
+      setTimeout(()=>bot(cfg.key
+        ? "canale cifrato, Alex1611. ti ascolto: scrivi normalmente."
+        : "sei dentro, ma il canale è muto: tocca la barra rossa qui sopra e incolla la chiave API."),300);
+    }
+    setTimeout(()=>inp.focus(),200);
+  }
+
+  paint();
+  if(sessionStorage.getItem("anon_unlocked")){boot.classList.add("hide");unlock();}
+})();
+</script>
+</body>
+</html>
