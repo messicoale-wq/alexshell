@@ -583,13 +583,15 @@
     },10);
   }
 
+  function closeKb(){inp.blur();toBottom();}
   send.addEventListener("click",()=>{
     if(busy){if(ctrl)ctrl.abort();return;}
-    handle(inp.value);inp.value="";inp.focus();
+    handle(inp.value);inp.value="";closeKb();
   });
   inp.addEventListener("keydown",e=>{
-    if(e.key==="Enter"){e.preventDefault();if(!busy){handle(inp.value);inp.value="";}}
+    if(e.key==="Enter"){e.preventDefault();if(!busy){handle(inp.value);inp.value="";closeKb();}}
   });
+  log.addEventListener("click",closeKb);
 
   function unlock(){
     lock.classList.add("hide");boot.classList.add("hide");chat.classList.add("on");
