@@ -189,11 +189,11 @@ textarea.fld { min-height:80px; resize:vertical; line-height:1.5; font-size:13px
         <div id="log"></div>
         <div id="keybar" class="on"><b>!</b> chiave API non collegata<span class="ar">›</span></div>
         <div class="att" id="att"><img id="attImg" alt=""><span id="attName">allegato</span><b id="attX">✕</b></div>
-        <div class="trace"><span>nodi <b id="t1">0</b></span><span>ping <b id="t2">0ms</b></span><span>aes <b>256</b></span><span>build <b>1.6</b></span><span>id <b id="t3">L9XU</b></span></div>
+        <div class="trace"><span>nodi <b id="t1">0</b></span><span>ping <b id="t2">0ms</b></span><span>aes <b>256</b></span><span>build <b>1.7</b></span><span>id <b id="t3">L9XU</b></span></div>
         <div class="bar">
           <span class="p">&gt;</span>
           <button class="clip" id="clip" aria-label="allega immagine">＋</button>
-          <input id="in" placeholder="scrivi, /img <prompt>, /web <query>, /help" autocomplete="off" spellcheck="false" enterkeyhint="send">
+          <input id="in" placeholder="scrivi, /set, /img <prompt>, /test, /help" autocomplete="off" spellcheck="false" enterkeyhint="send">
           <button class="send" id="send" aria-label="invia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M12 5l7 7-7 7"></path></svg><span id="sendLbl">INVIA</span></button>
         </div>
       </div>
@@ -325,17 +325,23 @@ $("#test").addEventListener("click",async()=>{
     if(!r.ok){const t=await r.text().catch(()=>"");$("#diag").className="diag";$("#diag").textContent="HTTP "+r.status+" · "+t.slice(0,140);}
   }catch(e){$("#stato").textContent="stato: rete o CORS";$("#diag").className="diag";$("#diag").textContent=String(e);}
 });
-$("#testImg").addEventListener("click",async()=>{
-  const k=clean($("#key").value);
+async function runImgTest(){
+  const k=clean($("#key").value)||cfg.key;
+  if(!k){bot("manca la chiave.");return;}
   $("#diag").className="diag";$("#diag").textContent="prova immagine in corso...";
+  bot("prova immagine in corso…");
   try{
     const r=await fetch(API+"/image/generate",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+k},
       body:JSON.stringify({model:"lustify-v8",prompt:"a woman portrait, natural light, detailed skin",negative_prompt:"blurry",safe_mode:false,format:"webp",width:832,height:1216,variants:1})});
     if(r.ok){const j=await r.json();const n=(j.images||[]).length;
-      $("#diag").className="diag ok";$("#diag").textContent="immagine ok · "+n+" risultati · seed "+(j.seed!=null?j.seed:"-");}
-    else{const t=await r.text().catch(()=>"");$("#diag").className="diag";$("#diag").textContent="HTTP "+r.status+" · "+t.slice(0,160);}
-  }catch(e){$("#diag").className="diag";$("#diag").textContent="rete: "+String(e);}
-});
+      const m="immagine ok · "+n+" risultati · seed "+(j.seed!=null?j.seed:"-");
+      $("#diag").className="diag ok";$("#diag").textContent=m;bot(m);}
+    else{const t=await r.text().catch(()=>"");const m="HTTP "+r.status+" · "+t.slice(0,200);
+      $("#diag").className="diag";$("#diag").textContent=m;bot("prova immagine → "+m);}
+  }catch(e){const m="rete: "+String(e);
+    $("#diag").className="diag";$("#diag").textContent=m;bot("prova immagine → "+m);}
+}
+$("#testImg").addEventListener("click",runImgTest);
 const openSet=()=>{measureTop();$("#set").classList.add("on");$("#set").scrollTop=0;setTimeout(()=>$("#key").focus(),120);};
 gear.addEventListener("click",openSet);$("#keybar").addEventListener("click",openSet);
 $("#closeSet").addEventListener("click",()=>$("#set").classList.remove("on"));
@@ -554,10 +560,12 @@ async function handle(raw){
   const low=t.toLowerCase();
 
   if(low==="/clear"){convo=[];log.innerHTML="";save();sys("buffer svuotato");return;}
-  if(low==="/help"){bot("/img <prompt> [ratio=3:2] [n=1-4] · /web <query> · /mem <fatto> · /clear · /lock · /mask\n＋ allega un'immagine e scrivi la domanda.");return;}
+  if(low==="/help"){bot("/set · /test · /img <prompt> [ratio=3:2] [n=1-4] · /web <query> · /mem <fatto> · /clear · /lock · /mask\n＋ allega un'immagine e scrivi la domanda.");return;}
   if(low==="/lock"){chat.classList.remove("on");lock.classList.remove("hide");code="";paint();lmsg.textContent="";lmsg.className="msg";sessionStorage.removeItem("anon_unlocked");return;}
   if(low==="/mask"){rainOn=!rainOn;bot("pioggia "+(rainOn?"riattivata.":"sospesa."));return;}
   if(low.startsWith("/mem ")){const v=t.slice(5).trim();if(v){mem.push(v);localStorage.setItem(GK,JSON.stringify(mem));paintMem();bot("memorizzato: "+v);}return;}
+  if(low==="/set"){openSet();return;}
+  if(low==="/test"){runImgTest();return;}
 
   const e={r:"me",t:t||"(immagine)"};
   if(pending){e.att=pending;}
@@ -616,6 +624,7 @@ function unlock(){
     setTimeout(()=>bot(cfg.key?"canale aperto, Alex. dimmi pure: testo, immagini, ricerche."
       :"sei dentro, ma il canale è muto: tocca la barra rossa e incolla la chiave API."),200);
   }
+  if(!cfg.key)setTimeout(openSet,400);
 }
 paint();
 if(sessionStorage.getItem("anon_unlocked")){boot.classList.add("hide");unlock();}
