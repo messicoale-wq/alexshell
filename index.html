@@ -583,7 +583,12 @@
     },10);
   }
 
-  function closeKb(){inp.blur();toBottom();}
+  function closeKb(){
+    try{document.activeElement.blur();}catch(e){}
+    inp.setAttribute("readonly","readonly");
+    inp.blur();
+    setTimeout(()=>{inp.removeAttribute("readonly");toBottom();},140);
+  }
   send.addEventListener("click",()=>{
     if(busy){if(ctrl)ctrl.abort();return;}
     handle(inp.value);inp.value="";closeKb();
