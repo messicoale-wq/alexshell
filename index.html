@@ -190,7 +190,7 @@ textarea.fld { min-height:80px; resize:vertical; line-height:1.5; font-size:13px
         <div id="log"></div>
         <div id="keybar" class="on"><b>!</b> chiave API non collegata — tocca per inserirla<span class="ar">›</span></div>
         <div class="att" id="att"><img id="attImg" alt=""><span id="attName">allegato</span><b id="attX">✕</b></div>
-        <div class="trace"><span>nodi <b id="t1">0</b></span><span>ping <b id="t2">0ms</b></span><span>aes <b>256</b></span><span>build <b>2.3</b></span><span>id <b id="t3">L9XU</b></span></div>
+        <div class="trace"><span>nodi <b id="t1">0</b></span><span>ping <b id="t2">0ms</b></span><span>aes <b>256</b></span><span>build <b>2.4</b></span><span>id <b id="t3">L9XU</b></span></div>
         <div class="bar">
           <span class="p">&gt;</span>
           <button class="clip" id="clip" aria-label="allega immagine">＋</button>
@@ -224,8 +224,9 @@ textarea.fld { min-height:80px; resize:vertical; line-height:1.5; font-size:13px
     <div class="row"><input class="fld" id="memIn" placeholder="un fatto da ricordare" autocomplete="off"><button class="sbtn" id="memAdd">+</button></div>
     <div class="lbl">5 · web search</div>
     <div class="row"><button class="sbtn" id="webTgl">auto: off</button></div>
+    <div class="lbl">6 · dati</div>
+    <div class="row"><button class="sbtn dng" id="wipeChat">cancella chat</button><button class="sbtn dng" id="wipe">cancella chiave</button></div>
     <div class="row"><button class="sbtn pri" id="saveCfg">salva</button><button class="sbtn" id="test">prova chiave</button><button class="sbtn" id="testImg">prova immagine</button></div>
-    <div class="row"><button class="sbtn dng" id="wipe">cancella chiave</button></div>
     <div class="note">Chiave da <a href="https://venice.ai/settings/api" target="_blank" rel="noopener">venice.ai/settings/api</a>. Resta solo su questo dispositivo. Immagini: modello lustify con <code>safe_mode:false</code>, nessun blur.</div>
   </div>
 </div></div>
@@ -373,7 +374,16 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"
 function save(){
   let imgs=0;
   const trimmed=[...convo.slice(-30)].reverse().filter(e=>{if(e.r==="img"){imgs++;return imgs<=6;}return true;}).reverse();
-  try{localStorage.setItem(MK,JSON.stringify(trimmed));}catch(e){}
+  try{localStorage.setItem(MK,JSON.stringify(trimmed));return;}
+  catch(e){}
+  try{localStorage.setItem(MK,JSON.stringify(trimmed.filter(x=>x.r!=="img")));return;}
+  catch(e){}
+  try{localStorage.removeItem(MK);}catch(e){}
+}
+function clearChat(){
+  convo=[];log.innerHTML="";
+  try{localStorage.removeItem(MK);}catch(e){}
+  sys("chat cancellata");
 }
 function addLine(cls,html){const d=document.createElement("div");d.className="line "+cls;d.innerHTML=html;log.appendChild(d);toBottom();return d;}
 const sys=t=>addLine("sys","— "+esc(t)+" —");
@@ -562,7 +572,7 @@ async function handle(raw){
   const t=raw.trim();if((!t&&!pending)||busy)return;
   const low=t.toLowerCase();
 
-  if(low==="/clear"){convo=[];log.innerHTML="";save();sys("buffer svuotato");return;}
+  if(low==="/clear"||low==="/cancella"){clearChat();return;}
   if(low==="/help"){bot("/set · /test · /img <prompt> [ratio=3:2] [n=1-4] · /web <query> · /mem <fatto> · /clear · /lock · /mask\n＋ allega un'immagine e scrivi la domanda.");return;}
   if(low==="/lock"){chat.classList.remove("on");lock.classList.remove("hide");code="";paint();lmsg.textContent="";lmsg.className="msg";sessionStorage.removeItem("anon_unlocked");return;}
   if(low==="/mask"){rainOn=!rainOn;bot("pioggia "+(rainOn?"riattivata.":"sospesa."));return;}
@@ -616,6 +626,21 @@ const closeKb=()=>{try{document.activeElement.blur();}catch(e){}
 send.addEventListener("click",()=>{if(busy){if(ctrl)ctrl.abort();return;}handle(inp.value);inp.value="";closeKb();});
 inp.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();if(!busy){handle(inp.value);inp.value="";closeKb();}}});
 log.addEventListener("click",closeKb);
+
+/* ---------- cancella chat, doppio tocco ---------- */
+let wipeArm=0,wipeTimer=null;
+const wipeBtn=$("#wipeChat");
+wipeBtn.addEventListener("click",()=>{
+  if(Date.now()-wipeArm>3500){
+    wipeArm=Date.now();
+    wipeBtn.textContent="tocca di nuovo per confermare";
+    clearTimeout(wipeTimer);
+    wipeTimer=setTimeout(()=>{wipeBtn.textContent="cancella chat";wipeArm=0;},3600);
+    return;
+  }
+  clearTimeout(wipeTimer);wipeArm=0;wipeBtn.textContent="cancella chat";
+  clearChat();
+});
 
 function unlock(){
   lock.classList.add("hide");boot.classList.add("hide");chat.classList.add("on");
