@@ -26,7 +26,7 @@ header { padding:6px 12px 12px; }
 .seal { flex:0 0 auto; color:#00ff66; }
 .seal.sm { width:38px; height:38px; }
 .wordmark { font-size:14px; letter-spacing:.16em; color:#ccffde; font-weight:700; white-space:nowrap; flex:0 0 auto; }
-.tbtn { flex:0 0 auto; height:32px; padding:0 10px; border-radius:8px; background:#03210f; border:1px solid rgba(0,255,102,.55); color:#b6ffcd; cursor:pointer; display:flex; align-items:center; gap:4px; font-family:inherit; font-size:11px; font-weight:700; letter-spacing:.08em; }
+.tbtn { flex:0 0 auto; height:32px; padding:0 10px; border-radius:8px; background:#03210f; border:1px solid rgba(0,255,102,.55); color:#b6ffcd; cursor:pointer; display:flex; align-items:center; font-family:inherit; font-size:12px; font-weight:700; }
 .tbtn.armed { background:#3a0b16; border-color:#ff004c; color:#ffd0dc; }
 .gear { position:relative; margin-left:auto; flex:0 0 auto; height:32px; padding:0 12px; border-radius:8px; background:#03210f; border:1px solid #00ff66; color:#eafff2; cursor:pointer; display:flex; align-items:center; gap:5px; font-family:inherit; font-size:11px; font-weight:700; letter-spacing:.1em; }
 .gear .warn { position:absolute; top:-4px; right:-4px; width:9px; height:9px; border-radius:50%; background:#ff004c; display:none; }
@@ -384,9 +384,8 @@ function save(){
   try{localStorage.removeItem(MK);}catch(e){}
 }
 function clearChat(){
-  convo=[];log.replaceChildren();
+  convo=[];log.innerHTML="";
   try{localStorage.removeItem(MK);}catch(e){}
-  try{sessionStorage.removeItem(MK);}catch(e){}
   sys("chat cancellata");
 }
 function addLine(cls,html){const d=document.createElement("div");d.className="line "+cls;d.innerHTML=html;log.appendChild(d);toBottom();return d;}
